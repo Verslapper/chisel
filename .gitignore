@@ -1,0 +1,10 @@
+
+.vs/Chisel/v15/.suo
+*.lock
+*.ide
+*.ide-shm
+*.ide-wal
+Chisel.Model/obj/
+Chisel/obj/
+Chisel/bin/Debug/
+*.pdb

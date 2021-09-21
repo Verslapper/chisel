@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.902
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chisel", "Chisel\Chisel.csproj", "{CAC5EE00-E4C7-459C-A012-B3F1689FD721}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chisel.Model", "Chisel.Model\Chisel.Model.csproj", "{FAEDD05F-A34C-45D7-94C3-B3382AA6AFB8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CAC5EE00-E4C7-459C-A012-B3F1689FD721}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CAC5EE00-E4C7-459C-A012-B3F1689FD721}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CAC5EE00-E4C7-459C-A012-B3F1689FD721}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CAC5EE00-E4C7-459C-A012-B3F1689FD721}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FAEDD05F-A34C-45D7-94C3-B3382AA6AFB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FAEDD05F-A34C-45D7-94C3-B3382AA6AFB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FAEDD05F-A34C-45D7-94C3-B3382AA6AFB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FAEDD05F-A34C-45D7-94C3-B3382AA6AFB8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6E9EC980-05C7-4CC0-B4A3-805A69E0A029}
+	EndGlobalSection
+EndGlobal
