@@ -47,37 +47,6 @@ namespace Chisel
             winningTeam.Win = true;
             winningTeam.Players.First().MVP = true;
 
-            // HTML Agility Pack - XPATH attempts. What exactly are they looking for?!
-            //for (int teamCount = 1; teamCount <= 2; teamCount++)
-            //{
-            //    var players = new List<Player>();
-            //    var keepLooping = true;
-            //    var i = 0;
-            //    while (keepLooping)
-            //    {
-            //        try
-            //        {
-            //            var player = new Player
-            //            {
-            //                Name = doc.DocumentNode.SelectSingleNode("/html/body/div[6]/div[2]/div/div/table/tbody[" + teamCount + "]/tr[" + (i * 2 + 1) + "]/td[2]/a").InnerText.Trim(),
-            //                Score = int.Parse(doc.DocumentNode.SelectSingleNode("/html/body/div[6]/div[2]/div/div/table/tbody[" + teamCount + "]/tr[" + (i * 2 + 1) + "]/td[3]").InnerText.Trim())
-            //            };
-            //            players.Add(player);
-            //        }
-            //        catch (Exception)
-            //        {
-            //            keepLooping = false;
-            //        }
-            //        i++;
-            //    }
-
-            //    teams.Add(new Team
-            //    {
-            //        Score = int.Parse(doc.DocumentNode.SelectSingleNode("/html/body/div[6]/div[2]/div/div/table/thead[" + teamCount + "]/tr/th[1]/h3").InnerText.Trim().Split(' ')[0]),
-            //        Players = players
-            //    });
-            //}
-
             var game = new Game
             {
                 Id = title[0],
@@ -164,9 +133,7 @@ namespace Chisel
             // strip division
             var divisionStart = rankAndDivision.IndexOf("Division");
             var rank = rankAndDivision.Substring(0, divisionStart - 1).Trim();
-            // strip spaces
             var spacelessRank = rank.Replace(" ", "");
-            // enum parse
             return (Rank)Enum.Parse(typeof(Rank), spacelessRank);
         }
     }
