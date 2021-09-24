@@ -12,5 +12,6 @@ namespace Chisel.Model.Models
         public int Saves { get; set; }
         public int Shots { get; set; }
         public bool MVP { get; set; }
+        public bool Win { get; set; }
     }
 }

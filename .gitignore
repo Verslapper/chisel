@@ -5,6 +5,7 @@
 *.ide-shm
 *.ide-wal
 Chisel.Model/obj/
+Chisel.Model/bin/Debug/
 Chisel/obj/
 Chisel/bin/Debug/
 *.pdb
