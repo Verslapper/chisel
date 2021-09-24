@@ -4,6 +4,7 @@ using Fizzler.Systems.HtmlAgilityPack;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -14,10 +15,37 @@ namespace Chisel
     {
         static void Main(string[] args)
         {
-            var username = "CoutzyCarter";
+            // get from commandline/config
+            var username = ConfigurationManager.AppSettings["Username"];
+
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                Console.WriteLine("Please add a ballchasing.com username to the setting in the Chisel.exe.config file.");
+                throw new MissingFieldException("Please add a ballchasing.com username to the setting in the Chisel.exe.config file.");
+            }
+
             var games = new List<Game>();
+            // TODO: load in games from file
+
+            // traverse listing page
+            var listingUrl = $"https://ballchasing.com/?title=&player-name={username}";
+            var listingWeb = new HtmlWeb();
+            var listingDoc = listingWeb.Load(listingUrl).DocumentNode;
+
+            // get game ID and if not in games list, get game URLs
+            var listingItems = listingDoc.QuerySelectorAll("ul.creplays li .replay-title");
+            foreach (var listing in listingItems)
+            {
+                var gameId = listing.InnerText.Trim().Split(' ')[0];
+                if (!games.Any(game => game.Id == gameId))
+                {
+                    var nextUrl = listing.QuerySelector(".replay-link").GetAttributeValue("href", string.Empty);
+                    // do all the single URL stuff below
+                    Console.WriteLine(nextUrl);
+                }
+            }
+
             // make HTTP request to URL
-            var content = string.Empty;
             var url = "https://ballchasing.com/replay/30793a71-afd8-45a6-afb1-8ed41a357eea";
             var web = new HtmlWeb();
             var doc = web.Load(url);
@@ -28,7 +56,6 @@ namespace Chisel
 
             // using Fizzler syntax
             var document = doc.DocumentNode;
-            var boxScore = document.QuerySelectorAll("table.replay-stats");
 
             var teams = new List<Team>();
             var teamScores = document.QuerySelectorAll("table.replay-stats thead h3");
@@ -55,53 +82,55 @@ namespace Chisel
                 player.Win = true;
             }
 
-            games.Add(new Game
-            {
-                Id = title[0],
-                GameMode = (GameMode)Enum.Parse(typeof(GameMode), title[titleElements - 2]),
-                Ranked = title[titleElements - 3] == "Ranked",
-                Teams = teams
-            });
-
-            // save parsed info
             var csv = new StringBuilder();
-            var header = $"GameId,GameMode,IsRanked,BlueScore,OrangeScore,BlueWin,OrangeWin," +
-                $"Blue1Name,Blue1Rank,Blue1MVP,Blue1Score,Blue1Goals,Blue1Assists,Blue1Saves,Blue1Shots,Blue1Win" +
-                $"Blue2Name,Blue2Rank,Blue2MVP,Blue2Score,Blue2Goals,Blue2Assists,Blue2Saves,Blue2Shots,Blue2Win" +
-                $"Blue3Name,Blue3Rank,Blue3MVP,Blue3Score,Blue3Goals,Blue3Assists,Blue3Saves,Blue3Shots,Blue3Win" +
-                $"Blue4Name,Blue4Rank,Blue4MVP,Blue4Score,Blue4Goals,Blue4Assists,Blue4Saves,Blue4Shots,Blue4Win" +
-                $"Orange1Name,Orange1Rank,Orange1MVP,Orange1Score,Orange1Goals,Orange1Assists,Orange1Saves,Orange1Shots,Orange1Win" +
-                $"Orange2Name,Orange2Rank,Orange2MVP,Orange2Score,Orange2Goals,Orange2Assists,Orange2Saves,Orange2Shots,Orange2Win" +
-                $"Orange3Name,Orange3Rank,Orange3MVP,Orange3Score,Orange3Goals,Orange3Assists,Orange3Saves,Orange3Shots,Orange3Win" +
-                $"Orange4Name,Orange4Rank,Orange4MVP,Orange4Score,Orange4Goals,Orange4Assists,Orange4Saves,Orange4Shots,Orange4Win";
-            csv.AppendLine(header);
-            
-            foreach (var game in games)
+            if (!games.Any(game => game.Id == title[0])) // only add new games
             {
-                var gameLine = $"{game.Id},{game.GameMode},{game.Ranked},{game.Teams.First().Score},{game.Teams.Last().Score},{game.Teams.First().Win},{game.Teams.Last().Win},";
-                foreach (var team in game.Teams)
+                games.Add(new Game
                 {
-                    for (int i = 0; i < 4; i++)
+                    Id = title[0],
+                    GameMode = (GameMode)Enum.Parse(typeof(GameMode), title[titleElements - 2]),
+                    Ranked = title[titleElements - 3] == "Ranked",
+                    Teams = teams
+                });
+
+                // save parsed info
+                var header = $"GameId,GameMode,IsRanked,BlueScore,OrangeScore,BlueWin,OrangeWin," +
+                    $"Blue1Name,Blue1Rank,Blue1MVP,Blue1Score,Blue1Goals,Blue1Assists,Blue1Saves,Blue1Shots,Blue1Win," +
+                    $"Blue2Name,Blue2Rank,Blue2MVP,Blue2Score,Blue2Goals,Blue2Assists,Blue2Saves,Blue2Shots,Blue2Win," +
+                    $"Blue3Name,Blue3Rank,Blue3MVP,Blue3Score,Blue3Goals,Blue3Assists,Blue3Saves,Blue3Shots,Blue3Win," +
+                    $"Blue4Name,Blue4Rank,Blue4MVP,Blue4Score,Blue4Goals,Blue4Assists,Blue4Saves,Blue4Shots,Blue4Win," +
+                    $"Orange1Name,Orange1Rank,Orange1MVP,Orange1Score,Orange1Goals,Orange1Assists,Orange1Saves,Orange1Shots,Orange1Win," +
+                    $"Orange2Name,Orange2Rank,Orange2MVP,Orange2Score,Orange2Goals,Orange2Assists,Orange2Saves,Orange2Shots,Orange2Win," +
+                    $"Orange3Name,Orange3Rank,Orange3MVP,Orange3Score,Orange3Goals,Orange3Assists,Orange3Saves,Orange3Shots,Orange3Win," +
+                    $"Orange4Name,Orange4Rank,Orange4MVP,Orange4Score,Orange4Goals,Orange4Assists,Orange4Saves,Orange4Shots,Orange4Win,";
+                csv.AppendLine(header);
+
+                foreach (var game in games)
+                {
+                    var gameLine = $"{game.Id},{game.GameMode},{game.Ranked},{game.Teams.First().Score},{game.Teams.Last().Score},{game.Teams.First().Win},{game.Teams.Last().Win},";
+                    foreach (var team in game.Teams)
                     {
-                        // Fill commas for four players if 2v2 game
-                        if (team.Players.Count() <= i)
+                        for (int i = 0; i < 4; i++)
                         {
-                            gameLine += $",,,,,,,,,";
-                        }
-                        else
-                        {
-                            var player = team.Players[i];
-                            gameLine += $"{player.Name},{player.Rank},{player.MVP},{player.Score},{player.Goals},{player.Assists},{player.Saves},{player.Shots},{player.Win},";
+                            // Fill commas for four players if 2v2 game
+                            if (team.Players.Count() <= i)
+                            {
+                                gameLine += $",,,,,,,,,";
+                            }
+                            else
+                            {
+                                var player = team.Players[i];
+                                gameLine += $"{player.Name},{player.Rank},{player.MVP},{player.Score},{player.Goals},{player.Assists},{player.Saves},{player.Shots},{player.Win},";
+                            }
                         }
                     }
+                    csv.AppendLine(gameLine);
                 }
-                csv.AppendLine(gameLine);
             }
 
             File.WriteAllText($"C:\\chisel\\chisel-{Sanitise(username)}.csv", csv.ToString());
 
-            // traverse listing page
-            // detect duplicates
+            // might have to do the summaries and insights here, I'm not sure I can work Excel magic on this ... unless I hardcode columns to the main user
         }
 
         private static string Sanitise(string username)
