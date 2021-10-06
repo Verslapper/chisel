@@ -16,91 +16,18 @@ namespace Chisel
     {
         static void Main(string[] args)
         {
-            var username = ConfigurationManager.AppSettings["Username"];
-
-            if (string.IsNullOrWhiteSpace(username))
-            {
-                Console.WriteLine("Please add a ballchasing.com username to the setting in the Chisel.exe.config file.");
-                throw new MissingFieldException("Please add a ballchasing.com username to the setting in the Chisel.exe.config file.");
-            }
+            var username = ConfigurationManager.AppSettings["Username"] ?? "";
 
             var games = new List<Game>();
             // TODO: load in games from file
 
             // The Data Extraction Part
-            var listingUrl = $"https://ballchasing.com/?title=&player-name={username}";
-            var listingWeb = new HtmlWeb();
-            var listingDoc = listingWeb.Load(listingUrl).DocumentNode;
-            
-            var listingItems = listingDoc.QuerySelectorAll("ul.creplays li .replay-title");
-            foreach (var listing in listingItems)
+            var listingUrl = $"https://ballchasing.com/";
+            if (!string.IsNullOrWhiteSpace(username))
             {
-                var gameId = listing.InnerText.Trim().Split(' ')[0];
-
-                if (!games.Any(game => game.Id == gameId))
-                {
-                    Thread.Sleep(800);
-                    var nextUrl = listing.QuerySelector(".replay-link").GetAttributeValue("href", string.Empty);
-                    var url = $"https://ballchasing.com{nextUrl}";
-                    var web = new HtmlWeb();
-                    var doc = web.Load(url);
-                    
-                    var title = doc.DocumentNode.SelectSingleNode("//h2").InnerText.Trim().Split(' ');
-                    var document = doc.DocumentNode;
-
-                    try
-                    {
-                        var teams = new List<Team>();
-                        var teamScores = document.QuerySelectorAll("table.replay-stats thead h3");
-                        foreach (var teamScore in teamScores)
-                        {
-                            teams.Add(new Team { Score = int.Parse(teamScore.InnerText.Trim().Split(' ')[0]) });
-                        }
-
-                        var blueScores = document.QuerySelectorAll("table.replay-stats tbody.blue tr");
-                        //Console.WriteLine($"Blue score nodes: {blueScores.Count()}, teams: {teams.Count}");
-                        teams.First().Players = GetPlayerStats(blueScores);
-
-                        var orangeScores = document.QuerySelectorAll("table.replay-stats tbody.orange tr");
-                        //Console.WriteLine($"Orange score nodes: {blueScores.Count()}, teams: {teams.Count}");
-                        teams.Last().Players = GetPlayerStats(orangeScores);
-
-                        var winningTeam = teams.Last();
-                        if (teams.First().Score > teams.Last().Score)
-                        {
-                            winningTeam = teams.First();
-                        }
-                        winningTeam.Win = true;
-                        winningTeam.Players.First().MVP = true;
-                        foreach (var player in winningTeam.Players)
-                        {
-                            player.Win = true;
-                        }
-
-                        var gameMode = GameMode.Other;
-                        if (!Enum.TryParse(title[title.Length - 2], out gameMode))
-                        {
-                            gameMode = GameMode.Other;
-                        }
-
-                        games.Add(new Game
-                        {
-                            Id = gameId,
-                            GameMode = gameMode,
-                            Ranked = title[title.Length - 3] == "Ranked",
-                            Teams = teams
-                        });
-
-                        Console.WriteLine($"{DateTime.Now.ToLongTimeString()}: Added {listing.InnerText.Trim()}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Skipping {gameId} because data is not querying cleanly. {ex.InnerException} {ex.Message}");
-                    }
-                }
+                listingUrl += $"?title=&player-name={username}";
             }
-
-            // The I/O Part
+            var listingWeb = new HtmlWeb();
             var csv = new StringBuilder();
             var header = $"GameId,GameMode,IsRanked,BlueScore,OrangeScore,BlueWin,OrangeWin," +
                 $"Blue1Name,Blue1Rank,Blue1MVP,Blue1Score,Blue1Goals,Blue1Assists,Blue1Saves,Blue1Shots,Blue1Win," +
@@ -111,28 +38,123 @@ namespace Chisel
                 $"Orange2Name,Orange2Rank,Orange2MVP,Orange2Score,Orange2Goals,Orange2Assists,Orange2Saves,Orange2Shots,Orange2Win," +
                 $"Orange3Name,Orange3Rank,Orange3MVP,Orange3Score,Orange3Goals,Orange3Assists,Orange3Saves,Orange3Shots,Orange3Win," +
                 $"Orange4Name,Orange4Rank,Orange4MVP,Orange4Score,Orange4Goals,Orange4Assists,Orange4Saves,Orange4Shots,Orange4Win,";
-            csv.AppendLine(header);
-
-            foreach (var game in games)
+            
+            var loops = 0;
+            while (loops++ < 2 && !string.IsNullOrWhiteSpace(listingUrl))
             {
-                var gameLine = $"{game.Id},{game.GameMode},{game.Ranked},{game.Teams.First().Score},{game.Teams.Last().Score},{game.Teams.First().Win},{game.Teams.Last().Win},";
-                foreach (var team in game.Teams)
+                var listingDoc = listingWeb.Load(listingUrl).DocumentNode;
+                var listingItems = listingDoc.QuerySelectorAll("ul.creplays li .replay-title");
+                foreach (var listing in listingItems)
                 {
-                    for (int i = 0; i < 4; i++)
+                    var gameId = listing.InnerText.Trim().Split(' ')[0];
+
+                    if (!games.Any(game => game.Id == gameId))
                     {
-                        // Fill commas for max players regardless of number of players in the game
-                        if (team.Players.Count() <= i)
+                        Thread.Sleep(800);
+                        var nextUrl = listing.QuerySelector(".replay-link").GetAttributeValue("href", string.Empty);
+                        var url = $"https://ballchasing.com{nextUrl}";
+                        var web = new HtmlWeb();
+                        var doc = web.Load(url);
+
+                        var title = doc.DocumentNode.SelectSingleNode("//h2").InnerText.Trim().Split(' ');
+                        var document = doc.DocumentNode;
+
+                        try
                         {
-                            gameLine += $",,,,,,,,,";
+                            var teams = new List<Team>();
+                            var teamScores = document.QuerySelectorAll("table.replay-stats thead h3");
+                            foreach (var teamScore in teamScores)
+                            {
+                                teams.Add(new Team { Score = int.Parse(teamScore.InnerText.Trim().Split(' ')[0]) });
+                            }
+
+                            var blueScores = document.QuerySelectorAll("table.replay-stats tbody.blue tr");
+                            //Console.WriteLine($"Blue score nodes: {blueScores.Count()}, teams: {teams.Count}");
+                            teams.First().Players = GetPlayerStats(blueScores);
+
+                            var orangeScores = document.QuerySelectorAll("table.replay-stats tbody.orange tr");
+                            //Console.WriteLine($"Orange score nodes: {blueScores.Count()}, teams: {teams.Count}");
+                            teams.Last().Players = GetPlayerStats(orangeScores);
+
+                            var winningTeam = teams.Last();
+                            // TODO: FIX: Doesn't work for forfeits
+                            if (teams.First().Score > teams.Last().Score)
+                            {
+                                winningTeam = teams.First();
+                            }
+                            winningTeam.Win = true;
+                            winningTeam.Players.First().MVP = true;
+                            foreach (var player in winningTeam.Players)
+                            {
+                                player.Win = true;
+                            }
+
+                            var gameMode = GameMode.Other;
+                            if (!Enum.TryParse(title[title.Length - 2], out gameMode))
+                            {
+                                if (title.Length == 3)
+                                {
+                                    gameMode = GameMode.Tourney;
+                                }
+                                else
+                                {
+                                    gameMode = GameMode.Other;
+                                }
+                            }
+
+                            games.Add(new Game
+                            {
+                                Id = gameId,
+                                GameMode = gameMode,
+                                Ranked = title[title.Length - 3] == "Ranked",
+                                Teams = teams
+                            });
+
+                            Console.WriteLine($"{DateTime.Now.ToLongTimeString()}: Added {listing.InnerText.Trim()}");
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            var player = team.Players[i];
-                            gameLine += $"{player.Name},{player.Rank},{player.MVP},{player.Score},{player.Goals},{player.Assists},{player.Saves},{player.Shots},{player.Win},";
+                            Console.WriteLine($"Skipping {gameId} because data is not querying cleanly. {ex.InnerException} {ex.Message}");
                         }
                     }
                 }
-                csv.AppendLine(gameLine);
+
+                // The I/O Part
+                csv.AppendLine(header);
+
+                foreach (var game in games)
+                {
+                    var gameLine = $"{game.Id},{game.GameMode},{game.Ranked},{game.Teams.First().Score},{game.Teams.Last().Score},{game.Teams.First().Win},{game.Teams.Last().Win},";
+                    foreach (var team in game.Teams)
+                    {
+                        for (int i = 0; i < 4; i++)
+                        {
+                            // Fill commas for max players regardless of number of players in the game
+                            if (team.Players.Count() <= i)
+                            {
+                                gameLine += $",,,,,,,,,";
+                            }
+                            else
+                            {
+                                var player = team.Players[i];
+                                gameLine += $"{player.Name},{player.Rank},{player.MVP},{player.Score},{player.Goals},{player.Assists},{player.Saves},{player.Shots},{player.Win},";
+                            }
+                        }
+                    }
+                    csv.AppendLine(gameLine);
+                }
+
+                // Detect next page
+                var next = listingDoc.QuerySelector(".pagination-next");
+                if (next != null && !string.IsNullOrWhiteSpace(next.GetAttributeValue("href", string.Empty)))
+                {
+                    // TODO: FIX: This appears correct via debug, but the loop pulls in randos games. Why?
+                    listingUrl = $"https://ballchasing.com/" + next.GetAttributeValue("href", string.Empty);
+                } 
+                else
+                {
+                    listingUrl = "";
+                }
             }
 
             File.WriteAllText($"C:\\chisel\\chisel-{Sanitise(username)}.csv", csv.ToString());

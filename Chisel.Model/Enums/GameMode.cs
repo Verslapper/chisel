@@ -2,7 +2,7 @@
 {
     public enum GameMode
     {
-        Solo,
+        Duel,
         Doubles,
         Standard,
         Chaos,
@@ -10,6 +10,7 @@
         SnowDay,
         Rumble,
         Dropshot,
-        Other
+        Other,
+        Tourney // TODO: detect mode from tags
     }
 }
