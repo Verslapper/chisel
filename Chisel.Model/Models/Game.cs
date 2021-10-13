@@ -9,5 +9,6 @@ namespace Chisel.Model.Models
         public GameMode GameMode { get; set; }
         public bool Ranked { get; set; }
         public List<Team> Teams { get; set; }
+        public int Margin { get; set; }
     }
 }

@@ -37,11 +37,12 @@ namespace Chisel
                 $"Orange1Name,Orange1Rank,Orange1MVP,Orange1Score,Orange1Goals,Orange1Assists,Orange1Saves,Orange1Shots,Orange1Win," +
                 $"Orange2Name,Orange2Rank,Orange2MVP,Orange2Score,Orange2Goals,Orange2Assists,Orange2Saves,Orange2Shots,Orange2Win," +
                 $"Orange3Name,Orange3Rank,Orange3MVP,Orange3Score,Orange3Goals,Orange3Assists,Orange3Saves,Orange3Shots,Orange3Win," +
-                $"Orange4Name,Orange4Rank,Orange4MVP,Orange4Score,Orange4Goals,Orange4Assists,Orange4Saves,Orange4Shots,Orange4Win,";
+                $"Orange4Name,Orange4Rank,Orange4MVP,Orange4Score,Orange4Goals,Orange4Assists,Orange4Saves,Orange4Shots,Orange4Win,Margin";
             
-            var loops = 0;
-            while (loops++ < 2 && !string.IsNullOrWhiteSpace(listingUrl))
-            {
+            // REVISIT: Looping just takes any old results, and loops at least one rotation longer than I expected, so it's out for now.
+            //var loops = 0;
+            //while (loops++ < 2 && !string.IsNullOrWhiteSpace(listingUrl))
+            //{
                 var listingDoc = listingWeb.Load(listingUrl).DocumentNode;
                 var listingItems = listingDoc.QuerySelectorAll("ul.creplays li .replay-title");
                 foreach (var listing in listingItems)
@@ -102,12 +103,15 @@ namespace Chisel
                                 }
                             }
 
+                            var margin = Math.Max(teams.First().Score - teams.Last().Score, teams.Last().Score - teams.First().Score);
+
                             games.Add(new Game
                             {
                                 Id = gameId,
                                 GameMode = gameMode,
                                 Ranked = title[title.Length - 3] == "Ranked",
-                                Teams = teams
+                                Teams = teams,
+                                Margin = margin
                             });
 
                             Console.WriteLine($"{DateTime.Now.ToLongTimeString()}: Added {listing.InnerText.Trim()}");
@@ -141,6 +145,7 @@ namespace Chisel
                             }
                         }
                     }
+                    gameLine += $"{game.Margin},";
                     csv.AppendLine(gameLine);
                 }
 
@@ -155,7 +160,7 @@ namespace Chisel
                 {
                     listingUrl = "";
                 }
-            }
+            //}
 
             File.WriteAllText($"C:\\chisel\\chisel-{Sanitise(username)}.csv", csv.ToString());
 
