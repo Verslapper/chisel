@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="Enums\GameMode.cs" />
     <Compile Include="Enums\Rank.cs" />
+    <Compile Include="Enums\Tier.cs" />
     <Compile Include="Models\Game.cs" />
     <Compile Include="Models\Player.cs" />
     <Compile Include="Models\Team.cs" />

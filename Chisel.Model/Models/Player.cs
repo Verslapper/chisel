@@ -5,7 +5,8 @@ namespace Chisel.Model.Models
     public class Player
     {
         public string Name { get; set; }
-        public Rank Rank { get; set; }
+        public Tier Tier { get; set; }
+        public Rank Rank { get; set; } // like rank, but comparable when casted
         public int Score { get; set; }
         public int Goals { get; set; }
         public int Assists { get; set; }

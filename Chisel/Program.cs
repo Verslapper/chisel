@@ -70,14 +70,11 @@ namespace Chisel
                         }
 
                         var blueScores = document.QuerySelectorAll("table.replay-stats tbody.blue tr");
-                        //Console.WriteLine($"Blue score nodes: {blueScores.Count()}, teams: {teams.Count}");
                         teams.First().Players = GetPlayerStats(blueScores);
 
                         var orangeScores = document.QuerySelectorAll("table.replay-stats tbody.orange tr");
-                        //Console.WriteLine($"Orange score nodes: {orangeScores.Count()}, teams: {teams.Count}");
                         teams.Last().Players = GetPlayerStats(orangeScores);
-
-
+                        
                         var uploader = username ?? title[1];
                         var result = title[title.Length - 1];
                         var uploaderTeam = new Team();
@@ -222,11 +219,14 @@ namespace Chisel
                                 var img = td.QuerySelector("img");
                                 if (img == null)
                                 {
+                                    player.Tier = Tier.Unranked;
                                     player.Rank = Rank.Unranked;
                                 }
                                 else
                                 {
-                                    player.Rank = ConvertTitleToRank(td.QuerySelector("img").GetAttributeValue("title", string.Empty));
+                                    var tierAndDivision = td.QuerySelector("img").GetAttributeValue("title", string.Empty);
+                                    player.Tier = GetTier(tierAndDivision);
+                                    player.Rank = GetRank(tierAndDivision);
                                 }
                                 break;
                             case 1:
@@ -266,17 +266,28 @@ namespace Chisel
             return players;
         }
 
-        private static Rank ConvertTitleToRank(string rankAndDivision)
+        private static Tier GetTier(string tierAndDivision)
         {
-            if (rankAndDivision.Length == 0)
+            if (tierAndDivision.Length == 0)
+            {
+                return Tier.Unranked;
+            }
+
+            // strip division
+            var divisionStart = tierAndDivision.IndexOf("Division");
+            var rank = tierAndDivision.Substring(0, divisionStart - 1).Trim();
+            var spacelessRank = rank.Replace(" ", "");
+            return (Tier)Enum.Parse(typeof(Tier), spacelessRank);
+        }
+
+        private static Rank GetRank(string tierAndDivision)
+        {
+            if (tierAndDivision.Length == 0)
             {
                 return Rank.Unranked;
             }
 
-            // strip division
-            var divisionStart = rankAndDivision.IndexOf("Division");
-            var rank = rankAndDivision.Substring(0, divisionStart - 1).Trim();
-            var spacelessRank = rank.Replace(" ", "");
+            var spacelessRank = tierAndDivision.Replace("Division", "").Replace(" ", "");
             return (Rank)Enum.Parse(typeof(Rank), spacelessRank);
         }
     }

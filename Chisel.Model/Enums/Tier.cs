@@ -1,0 +1,29 @@
+﻿namespace Chisel.Model.Enums
+{
+    public enum Tier
+    {
+        Unranked,
+        BronzeI,
+        BronzeII,
+        BronzeIII,
+        SilverI,
+        SilverII,
+        SilverIII,
+        GoldI,
+        GoldII,
+        GoldIII,
+        PlatinumI,
+        PlatinumII,
+        PlatinumIII,
+        DiamondI,
+        DiamondII,
+        DiamondIII,
+        ChampionI,
+        ChampionII,
+        ChampionIII,
+        GrandChampionI,
+        GrandChampionII,
+        GrandChampionIII,
+        SupersonicLegend
+    }
+}
