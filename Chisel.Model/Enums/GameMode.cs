@@ -7,7 +7,7 @@
         Standard,
         Chaos,
         Hoops,
-        SnowDay,
+        Snowday,
         Rumble,
         Dropshot,
         Other,
